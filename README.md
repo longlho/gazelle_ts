@@ -95,9 +95,10 @@ Then run `bazel run //:gazelle`.
 
 `@gazelle_ts//ts` is a Gazelle language; you compose your own `gazelle_binary` so it can be combined with other languages (`go`, `python`, `proto`, etc.) into a single binary.
 
-The plugin emits four abstract kinds, all loaded from `@gazelle_ts//ts:defs.bzl`:
+The plugin emits five abstract kinds, all loaded from `@gazelle_ts//ts:defs.bzl`:
 
 - `ts_library` for libraries.
+- `ts_sdk_library` for library packages that need a different concrete wrapper without changing how child `ts_library` packages are indexed.
 - `ts_test` for tests. It assumes a multi-entry runner such as vitest, jest, or mocha; no `entry_point` is set.
 - `ts_binary` for hand-written binary entry points. Gazelle never generates these, but auto-manages the rule's `data` from `entry_point` / `srcs` imports, matching the stock `js_binary` lifecycle.
 - `ts_bundler_config` for files matched by `ts_bundler_config_pattern`.
@@ -221,11 +222,12 @@ The resolver recognizes the `types`, `node-addons`, `node`, `import`, `module-sy
 
 ### Directives
 
-All directives are placed in `BUILD.bazel` as `# gazelle:<key> <value>` and inherit into subdirectories.
+All directives are placed in `BUILD.bazel` as `# gazelle:<key> <value>` and inherit into subdirectories unless noted.
 
 | Directive | Default | Notes |
 |---|---|---|
 | `ts_enabled` | `true` | Disable per-tree to skip directories owned by another tool. |
+| `ts_library_kind` | `ts_library` | Package-local; set to `ts_sdk_library` when only this package's library should use the alternate abstract kind. |
 | `ts_library_name` | package basename, e.g. `web` for `//apps/web` | Name of the generated library rule. |
 | `ts_test_name` | package basename + `_test`, e.g. `web_test` | Name of the generated test rule. |
 | `ts_visibility` | `//visibility:public` | Repeatable / space-separated list. |
@@ -388,6 +390,7 @@ Wire each generated abstract kind to a concrete macro at your root BUILD:
 
 ```starlark
 # gazelle:map_kind ts_library         myrepo_ts_library     //tools:ts.bzl
+# gazelle:map_kind ts_sdk_library     myrepo_ts_sdk_library //tools:ts.bzl
 # gazelle:map_kind ts_test            myrepo_ts_test        //tools:ts.bzl
 # gazelle:map_kind ts_binary          myrepo_ts_binary      //tools:ts.bzl
 # gazelle:map_kind ts_bundler_config  myrepo_bundler_config //tools:ts.bzl
@@ -411,6 +414,9 @@ def myrepo_ts_library(name, srcs, **kwargs):
         **kwargs
     )
 
+def myrepo_ts_sdk_library(name, srcs, **kwargs):
+    myrepo_ts_library(name = name, srcs = srcs, **kwargs)
+
 def myrepo_ts_test(name, data, **kwargs):
     # Pick the first .test.ts* from data for stock js_test. If you use a
     # multi-entry vitest_test/jest_test macro, forward data directly instead.
@@ -432,6 +438,14 @@ def myrepo_bundler_config(name, srcs, **kwargs):
 
 If you skip `map_kind`, the fallback in `@gazelle_ts//ts:defs.bzl` collects srcs/data into a `filegroup` so the BUILD still loads, but it does not typecheck or run tests.
 
+Use `ts_library_kind` for the narrow case where one package needs a different library wrapper but its child packages should keep the normal `ts_library` mapping:
+
+```starlark
+# gazelle:ts_library_kind ts_sdk_library
+```
+
+This is package-local by design. Avoid overriding `# gazelle:map_kind ts_library ...` in an app root just to change one package's macro, since that also changes how descendant libraries are recognized during import indexing.
+
 ### Migrating From Older Direct Emission
 
 If you are updating from a version that emitted `ts_project` / `js_test` directly:
@@ -439,7 +453,7 @@ If you are updating from a version that emitted `ts_project` / `js_test` directl
 1. Add `# gazelle:map_kind` directives for `ts_library`, `ts_test`, and, if used, `ts_bundler_config` at your root BUILD.
 2. Move project-reference compile flags (`composite`, `declaration`, `source_map`, `declaration_map`), `transpiler`, and `tsconfig` into your wrapper macro; the plugin no longer emits them.
 3. Move `entry_point` handling into your `ts_test` wrapper, or use a multi-entry runner.
-4. Drop directives that are now no-ops: `ts_project_references`, `ts_library_kind`, `ts_test_kind`, `ts_tsconfig`, `ts_transpiler`, `ts_test_entry_point`, `ts_test_entry_point_auto`.
+4. Drop directives that are now no-ops: `ts_project_references`, `ts_test_kind`, `ts_tsconfig`, `ts_transpiler`, `ts_test_entry_point`, `ts_test_entry_point_auto`.
 5. Re-run gazelle. Old `ts_project` / `js_test` rules will be replaced by your wrapper kinds.
 
 ## Build

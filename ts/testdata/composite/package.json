@@ -4,6 +4,7 @@
   "private": true,
   "license": "MIT",
   "imports": {
+    "#apps/*": "./apps/*",
     "#packages/*": "./packages/*"
   },
   "pnpm": {

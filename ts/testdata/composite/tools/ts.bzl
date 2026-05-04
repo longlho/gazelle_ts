@@ -15,6 +15,9 @@ def ts_library(name, srcs, **kwargs):
         **kwargs
     )
 
+def ts_sdk_library(name, srcs, **kwargs):
+    ts_library(name = name, srcs = srcs, **kwargs)
+
 def ts_test(name, data, **kwargs):
     entry = None
     for d in data:

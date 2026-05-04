@@ -1,0 +1,7 @@
+load("//tools:ts.bzl", "ts_library")
+
+ts_library(
+    name = "auth",
+    srcs = ["permissions.ts"],
+    visibility = ["//visibility:public"],
+)

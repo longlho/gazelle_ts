@@ -10,12 +10,13 @@ import (
 
 // All directives this plugin recognizes. Keep in sync with README.md.
 //
-// Notably absent: ts_library_kind / ts_test_kind / ts_project_references.
-// `# gazelle:map_kind` subsumes the kind overrides (and additionally lets
-// you pin the load path). Project-references compile flags belong in the
-// wrapper macro behind ts_library, not in the plugin's emitted attrs.
+// Notably absent: ts_test_kind / ts_project_references. `# gazelle:map_kind`
+// subsumes most kind overrides (and additionally lets you pin the load path).
+// Project-references compile flags belong in the wrapper macro behind
+// ts_library, not in the plugin's emitted attrs.
 const (
 	directiveEnabled              = "ts_enabled"
+	directiveLibraryKind          = "ts_library_kind"
 	directiveLibraryName          = "ts_library_name"
 	directiveTestName             = "ts_test_name"
 	directiveVisibility           = "ts_visibility"
@@ -38,6 +39,7 @@ func (l *tsLang) CheckFlags(fs *flag.FlagSet, c *config.Config) error { return n
 func (l *tsLang) KnownDirectives() []string {
 	return []string{
 		directiveEnabled,
+		directiveLibraryKind,
 		directiveLibraryName,
 		directiveTestName,
 		directiveVisibility,
@@ -84,6 +86,11 @@ func applyDirective(cfg *tsConfig, d rule.Directive) {
 	switch d.Key {
 	case directiveEnabled:
 		cfg.enabled = parseBool(val, cfg.enabled)
+	case directiveLibraryKind:
+		switch val {
+		case KindTsLibrary, KindTsSdkLibrary:
+			cfg.libraryKind = val
+		}
 	case directiveLibraryName:
 		if val != "" {
 			cfg.libraryName = val

@@ -134,13 +134,13 @@ func (l *tsLang) GenerateRules(args language.GenerateArgs) language.GenerateResu
 	var genImports []interface{}
 
 	if len(libSrcs) > 0 {
-		// Emit the abstract `ts_library` kind. Compilation-mode flags
+		// Emit the configured abstract library kind. Compilation-mode flags
 		// (composite, declaration, source_map, transpiler, tsconfig) are
 		// the wrapper macro's job — gazelle deliberately stays out of
 		// that decision so consumers can swap rules_ts for any equivalent
 		// rule set without rewiring the directive surface. The wrapper is
-		// reached via `# gazelle:map_kind ts_library <macro> <load_path>`.
-		r := rule.NewRule(KindTsLibrary, libName)
+		// reached via `# gazelle:map_kind <kind> <macro> <load_path>`.
+		r := rule.NewRule(cfg.libraryKind, libName)
 		r.SetAttr("srcs", libSrcs)
 		if len(cfg.visibility) > 0 {
 			r.SetAttr("visibility", cfg.visibility)

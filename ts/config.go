@@ -16,6 +16,11 @@ const (
 	// keeps the BUILD parseable but doesn't typecheck.
 	KindTsLibrary = "ts_library"
 
+	// KindTsSdkLibrary is an alternate abstract library kind for packages that
+	// need a different concrete wrapper without redefining ts_library for
+	// descendant packages.
+	KindTsSdkLibrary = "ts_sdk_library"
+
 	// KindTsTest is the abstract test kind. The plugin emits it with no
 	// entry_point — consumers map_kind to vitest_test, jest_test, or any
 	// multi-entry runner that auto-discovers from `data`. The fallback in
@@ -40,6 +45,10 @@ type tsConfig struct {
 	// libraryName / testName are the names of the generated rules.
 	libraryName string
 	testName    string
+
+	// libraryKind is the abstract rule kind emitted for the package library.
+	// It is package-local, not inherited by child packages.
+	libraryKind string
 
 	// visibility is the list of labels emitted on the library rule.
 	visibility []string
@@ -84,6 +93,7 @@ func newTsConfig() *tsConfig {
 		enabled:           true,
 		libraryName:       defaultLibraryName,
 		testName:          defaultTestName,
+		libraryKind:       KindTsLibrary,
 		visibility:        append([]string(nil), defaultVisibility...),
 		testPatterns:      append([]string(nil), defaultTestPatterns...),
 		extensions:        append([]string(nil), defaultExtensions...),
@@ -96,6 +106,7 @@ func newTsConfig() *tsConfig {
 // without mutating the parent.
 func (c *tsConfig) clone() *tsConfig {
 	cp := *c
+	cp.libraryKind = KindTsLibrary
 	cp.visibility = append([]string(nil), c.visibility...)
 	cp.testPatterns = append([]string(nil), c.testPatterns...)
 	cp.extensions = append([]string(nil), c.extensions...)

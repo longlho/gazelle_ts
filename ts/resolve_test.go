@@ -171,6 +171,38 @@ func TestResolveSubpathImport_PathTargetUsesRuleIndex(t *testing.T) {
 	}
 }
 
+func TestResolveSubpathImport_PrefersNestedPackageOverParentPackage(t *testing.T) {
+	lang := &tsLang{
+		packageDeps: map[string]bool{},
+		subpathImportsMap: map[string][]string{
+			"#pplx/*": {"./pplx/*"},
+		},
+	}
+	c := config.New()
+	c.Exts[languageName] = newTsConfig()
+	ix := gazelleresolve.NewRuleIndex(func(r *rule.Rule, pkgRel string) gazelleresolve.Resolver {
+		if r.Kind() == KindTsLibrary {
+			return lang
+		}
+		return nil
+	})
+	ix.AddRule(c, rule.NewRule(KindTsLibrary, "computer-app"), &rule.File{Pkg: "pplx/frontend/apps/ask/computer-app"})
+	ix.AddRule(c, rule.NewRule(KindTsLibrary, "spa-routes"), &rule.File{Pkg: "pplx/frontend/apps/ask/computer-app/spa-routes"})
+	ix.Finish()
+
+	got, external := lang.resolveSubpathImport(
+		"#pplx/frontend/apps/ask/computer-app/spa-routes/routes.js",
+		label.Label{Pkg: "pplx/frontend/apps/ask/server", Name: "server"},
+		ix,
+	)
+	if external {
+		t.Fatalf("external = true, want false")
+	}
+	if got != "//pplx/frontend/apps/ask/computer-app/spa-routes" {
+		t.Errorf("resolveSubpathImport = %q, want //pplx/frontend/apps/ask/computer-app/spa-routes", got)
+	}
+}
+
 func TestResolveImportsToDeps_ExactOverridePrecedesPackageImports(t *testing.T) {
 	cfg := newTsConfig()
 	c := config.New()

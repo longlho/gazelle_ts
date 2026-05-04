@@ -22,7 +22,7 @@ func (l *tsLang) Imports(c *config.Config, r *rule.Rule, f *rule.File) []resolve
 	// the time Imports() sees a rule, its r.Kind() is the gazelle-managed
 	// kind name (post-rewrite back from the consumer's wrapper). Match the
 	// abstract kind directly.
-	if r.Kind() != KindTsLibrary {
+	if r.Kind() != KindTsLibrary && r.Kind() != KindTsSdkLibrary {
 		return nil
 	}
 

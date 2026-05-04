@@ -73,7 +73,7 @@ func (l *tsLang) Resolve(
 	}
 
 	switch r.Kind() {
-	case KindTsLibrary:
+	case KindTsLibrary, KindTsSdkLibrary:
 		// The ts_library wrapper is expected to forward `deps` to its
 		// underlying ts_project (or equivalent). One attr for both npm
 		// packages and intra-repo project references.

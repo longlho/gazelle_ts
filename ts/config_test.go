@@ -22,11 +22,15 @@ func TestApplyDirective_Bools(t *testing.T) {
 func TestApplyDirective_Strings(t *testing.T) {
 	cfg := newTsConfig()
 	applyDirective(cfg, rule.Directive{Key: directiveLibraryName, Value: "src"})
+	applyDirective(cfg, rule.Directive{Key: directiveLibraryKind, Value: KindTsSdkLibrary})
 	applyDirective(cfg, rule.Directive{Key: directiveTestName, Value: "spec"})
 	applyDirective(cfg, rule.Directive{Key: directiveNpmLinkPattern, Value: "//pnpm:node_modules/{pkg}"})
 
 	if cfg.libraryName != "src" {
 		t.Errorf("libraryName = %q", cfg.libraryName)
+	}
+	if cfg.libraryKind != KindTsSdkLibrary {
+		t.Errorf("libraryKind = %q", cfg.libraryKind)
 	}
 	if cfg.testName != "spec" {
 		t.Errorf("testName = %q", cfg.testName)
@@ -96,6 +100,7 @@ func TestApplyDirective_GeneratedPackage(t *testing.T) {
 func TestClone_Independent(t *testing.T) {
 	parent := newTsConfig()
 	parent.libraryName = "lib"
+	parent.libraryKind = KindTsSdkLibrary
 	parent.testPatterns = append(parent.testPatterns, "*.spec.ts")
 	parent.generatedPackages["#foo/*"] = "//foo"
 
@@ -106,6 +111,9 @@ func TestClone_Independent(t *testing.T) {
 
 	if parent.libraryName != "lib" {
 		t.Errorf("parent libraryName mutated: %q", parent.libraryName)
+	}
+	if child.libraryKind != KindTsLibrary {
+		t.Errorf("child libraryKind = %q, want package-local default %q", child.libraryKind, KindTsLibrary)
 	}
 	if contains(parent.testPatterns, "**/__tests__/**") {
 		t.Errorf("parent testPatterns mutated: %v", parent.testPatterns)

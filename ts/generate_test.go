@@ -8,11 +8,11 @@ import (
 func TestIsTypeScriptFile(t *testing.T) {
 	cfg := newTsConfig()
 	cases := map[string]bool{
-		"a.ts":    true,
-		"a.tsx":   true,
-		"a.js":    false,
-		"a.json":  false,
-		"a.d.ts":  true,
+		"a.ts":      true,
+		"a.tsx":     true,
+		"a.js":      false,
+		"a.json":    false,
+		"a.d.ts":    true,
 		"a.test.ts": true,
 	}
 	for name, want := range cases {
@@ -33,12 +33,12 @@ func TestIsTypeScriptFile_CustomExtensions(t *testing.T) {
 func TestIsTestFile_DefaultPatterns(t *testing.T) {
 	cfg := newTsConfig()
 	cases := map[string]bool{
-		"foo.test.ts":      true,
-		"foo.test.tsx":     true,
-		"tests/index.ts":   true,
-		"test/main.ts":     true,
-		"src/foo.ts":       false,
-		"foo.spec.ts":      false, // not in default patterns
+		"foo.test.ts":                true,
+		"foo.test.tsx":               true,
+		"tests/index.ts":             true,
+		"test/main.ts":               true,
+		"src/foo.ts":                 false,
+		"foo.spec.ts":                false, // not in default patterns
 		"deeply/nested/test/file.ts": false, // patterns are top-level prefixes
 	}
 	for name, want := range cases {
@@ -80,11 +80,11 @@ func TestMatchTestPattern(t *testing.T) {
 
 func TestResolveRuleNames(t *testing.T) {
 	cases := []struct {
-		name           string
-		cfg            *tsConfig
-		rel            string
-		wantLib        string
-		wantTest       string
+		name     string
+		cfg      *tsConfig
+		rel      string
+		wantLib  string
+		wantTest string
 	}{
 		{
 			name:     "default uses package basename",

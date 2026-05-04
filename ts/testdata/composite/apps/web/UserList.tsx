@@ -2,6 +2,7 @@
 // project references resolving across deeply nested packages.
 import React from 'react';
 import { FormattedDate } from 'react-intl';
+import { canViewUsers } from '#apps/web/lib/auth/permissions.js';
 import { isAdmin, type User } from '#packages/core/types.js';
 import { newest } from '#packages/utils/format.js';
 
@@ -11,6 +12,9 @@ export interface UserListProps {
 
 export function UserList({ users }: UserListProps): React.ReactElement {
   const latest = newest(users);
+  if (!canViewUsers()) {
+    return <p>not allowed</p>;
+  }
   return (
     <ul>
       {users.map((u) => (
